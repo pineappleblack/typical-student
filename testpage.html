@@ -1,0 +1,102 @@
+<html>
+<head>
+	<link rel="stylesheet" href="leaflet.css">
+	<link rel="stylesheet" href="slider/jquery.range.css">
+	<script src="http://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+	<script src="leaflet.js"></script> 
+	<script src="slider/jquery.range-min.js"></script> 
+	<script src="info.js"></script>
+   
+  <style>
+	#mapid {
+		height: 400px;
+		width: 90%;
+		margin: 20px auto;
+	}
+	
+	h3 {
+		margin: 5px 0px;
+	}
+  </style>
+   
+</head>
+<body>
+
+	<div id="mapid"></div>
+	
+	
+	Среднее количество друзей не менее:<br><br><input class="single-slider" type="hidden" value="0" id="friends"></input>
+	
+	<script>
+	
+	var minFriends = 0;
+	
+		
+	var map = L.map('mapid').setView([55.7617, 37.62062], 9);
+
+	// добавляю карту
+	L.tileLayer('http://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png', {
+		attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="http://cartodb.com/attributions">CartoDB</a>',
+		subdomains: 'abcd',
+		maxZoom: 11,
+		minZoom: 9,
+	}).addTo(map);
+
+	// обработчк добавления объекта
+	function onEachFeature(feature, layer) {
+		popupContent = "<h3>" + feature.properties.name + "</h3>" + "<b>Среднее количество друзей: </b>" +
+		+ feature.properties.friends;
+		layer.bindPopup(popupContent);
+	}
+	
+	// добавляю вузы
+	lay = L.geoJSON(uniData, {
+
+		style: function (feature) {
+			return feature.properties && feature.properties.style;
+		},
+		
+		filter: function (feature, layer) {
+			if (feature.properties) {
+				// If the property "underConstruction" exists and is true, return false (don't render features under construction)
+				return feature.properties.friends > minFriends ? true : false;
+			}
+			return false;
+		},
+
+		onEachFeature: onEachFeature,
+
+		pointToLayer: function (feature, latlng) {
+			return L.circleMarker(latlng, { // кружочки
+				radius: 6,
+				fillColor: "#ff7800",
+				color: "#000",
+				weight: 1,
+				opacity: 1,
+				fillOpacity: 0.8
+			})
+			.bindTooltip(feature.properties.name, // подписи
+			{
+				permanent: true, 
+				direction: 'right',
+				offset: [3, 0]
+			});			
+		}
+		
+	}).addTo(map);
+	
+	$('.single-slider').jRange({
+		from: 0,
+		to: 800,
+		step : 50,
+		onstatechange : function(){
+			console.log();
+			minFriends = $(this)[0].options.value;
+			lay.clearLayers();
+			lay.addData(uniData);
+		}
+	});	
+	
+	</script>
+</body>
+</html>
